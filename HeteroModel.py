@@ -42,8 +42,9 @@ class PinSAGE(nn.Module):
         conv_dict_2 = {
             rel[1]: SAGEConv(hidden_features, out_features, aggregator_type='mean') for rel in graph.canonical_etypes
         }
-        self.RSAGEConv_1 = HeteroGraphConv(conv_dict_1, aggregate='sum')
-        self.RSAGEConv_2 = HeteroGraphConv(conv_dict_2, aggregate='sum')
+        self.RSAGEConv_1 = HeteroGraphConv(conv_dict_1, aggregate='mean')
+        self.RSAGEConv_2 = HeteroGraphConv(conv_dict_2, aggregate='mean')
+        # self.RSAGEConv_2 = HeteroGraphConv(conv_dict_2, aggregate='mean')
 
     def forward(self, g, x, etype=None):
         # x = x.to(self.device)

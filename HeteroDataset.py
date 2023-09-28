@@ -60,6 +60,7 @@ class HeteroDataset:
         return dgl.heterograph(hetero_graph_dict)
 
     def add_node_features(self):
+        torch.manual_seed(3407)
         self.graph.nodes['item'].data['feat'] = torch.from_numpy(self.node_features[:3706, 1:])
         self.graph.nodes['user'].data['feat'] = torch.from_numpy(self.node_features[:, 1:])
         self.graph.nodes['kg'].data['feat'] = torch.cat(

@@ -40,6 +40,6 @@ c = (a * b).sum(dim=1)
 # c = torch.where(c > 0, torch.tensor(1), torch.tensor(-1)).to('cpu')
 # ground_truth = 2 * torch.tensor(labels).to(device).to('cpu') - 1
 # print(f1_score(ground_truth, c))
-c = c.to('cpu') + 1 / 2
+c = (c.to('cpu')) + 1 / 2
 ground_truth = torch.tensor(labels).to(device).to('cpu')
 print(roc_auc_score(ground_truth.detach().numpy(), c.detach().numpy()))
