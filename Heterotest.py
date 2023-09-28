@@ -36,7 +36,9 @@ graph = copy.deepcopy(dataset.graph)
 model.eval()
 test = dataset.get_test()
 first_elements, second_elements, labels = zip(*test)
-h = model(graph, graph.ndata['h'])
+node_dict = {node_type: graph.nodes[node_type].data['feat'].to(device).to(torch.float32) for node_type in
+             graph.ntypes}
+h = model(graph, node_dict)
 a = torch.index_select(h, dim=0, index=torch.tensor(first_elements).to(device))
 b = torch.index_select(h, dim=0, index=torch.tensor(second_elements).to(device))
 c = (a * b).sum(dim=1)

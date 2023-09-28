@@ -39,11 +39,11 @@ user = []
 item = []
 model.train()
 print("===================Training==========================")
-for epoch in range(100):
+for epoch in range(args.epoch):
     node_dict = {node_type: graph.nodes[node_type].data['feat'].to(device).to(torch.float32) for node_type in
                  graph.ntypes}
     h = model(graph, node_dict)
-    samples = dataset.get_train_batch(5000)
+    samples = dataset.get_train_batch(args.batch_size)
     first_elements, second_elements, labels = zip(*samples)
     a = torch.index_select(h, dim=0, index=torch.tensor(first_elements).to(device))
     b = torch.index_select(h, dim=0, index=torch.tensor(second_elements).to(device))

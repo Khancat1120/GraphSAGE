@@ -37,9 +37,9 @@ opt = torch.optim.Adam(model.parameters())
 h = []
 model.train()
 print("===================Training==========================")
-for epoch in range(1000):
+for epoch in range(args.epoch):
     h = model(graph, graph.ndata['h'])
-    samples = dataset.get_train_batch(1000)
+    samples = dataset.get_train_batch(args.batch_size)
     first_elements, second_elements, labels = zip(*samples)
     a = torch.index_select(h, dim=0, index=torch.tensor(first_elements).to(device))
     b = torch.index_select(h, dim=0, index=torch.tensor(second_elements).to(device))
