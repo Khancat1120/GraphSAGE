@@ -32,7 +32,7 @@ from HomoDataset import *
 #         return F.normalize(h, p=2, dim=1)
 
 class PinSAGE(nn.Module):
-    def __init__(self, in_features, hidden_features, out_features, graph):
+    def __init__(self, in_features, hidden_features, out_features, device, graph):
         super().__init__()
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         conv_dict_1 = {
@@ -44,13 +44,9 @@ class PinSAGE(nn.Module):
         }
         self.RSAGEConv_1 = HeteroGraphConv(conv_dict_1, aggregate='mean')
         self.RSAGEConv_2 = HeteroGraphConv(conv_dict_2, aggregate='mean')
-        # self.RSAGEConv_2 = HeteroGraphConv(conv_dict_2, aggregate='mean')
 
     def forward(self, g, x, etype=None):
-        # x = x.to(self.device)
         g = g.to(self.device)
         h = self.RSAGEConv_1(g, x)
         h = self.RSAGEConv_2(g, h)
-        user = h['user']
-        item = h['item']
-        return F.normalize(torch.cat((item, user[len(item):])), p=2, dim=1)
+        return h

@@ -7,35 +7,21 @@ import argparse
 import copy
 from sklearn.metrics import f1_score
 from sklearn.metrics import roc_auc_score
-
-
-def get_parameter():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-lr', default=0.1, type=float, help="learning rate")
-    parser.add_argument('-embed_dim', default=32, type=int, help="embedding dimension")
-    parser.add_argument('-hidden_dim', default=64, type=int, help="embedding dimension")
-    parser.add_argument('-reg_lambda', default=0.03, type=float, help="l2 regularization parameter")
-    parser.add_argument('-batch_size', default=5120, type=int, help="batch size")
-    parser.add_argument('-epoch', default=1500, type=int, help="batch size")
-    parser.add_argument('-save_each', default=10, type=int, help="validate every k epochs")
-    args = parser.parse_args()
-    args = parser.parse_args()
-    return args
-
+from args import *
 
 args = get_parameter()
 dataset = HeteroDataset()
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-model = PinSAGE(16, args.hidden_dim, args.embed_dim, dataset.graph).to(device)
-optimizer = torch.optim.Adam(model.parameters(), lr=0.005,
-                             weight_decay=1e-4)  # Increased weight decay and reduced learning rate
+model = PinSAGE(16, args.hidden_dim, args.embed_dim, device, dataset.graph).to(device)
+optimizer = torch.optim.Adam(model.parameters(), lr=args.lr,
+                             weight_decay=args.weight_decay)  # Increased weight decay and reduced learning rate
 criterion = nn.BCEWithLogitsLoss()
 graph = copy.deepcopy(dataset.graph)
 
 n_features = 16
 
-h = []
+h = {}
 user = []
 item = []
 model.train()
@@ -46,11 +32,21 @@ for epoch in range(args.epoch):
     h = model(graph, node_dict)
     samples = dataset.get_train_batch(args.batch_size)
     first_elements, second_elements, labels = zip(*samples)
-    a = torch.index_select(h, dim=0, index=torch.tensor(first_elements).to(device))
-    b = torch.index_select(h, dim=0, index=torch.tensor(second_elements).to(device))
-    c = (a * b).sum(dim=1)
+
+    item = h['item'].to(device)
+    user = h['user'].to(device)
+    kg = h['kg'].to(device)
+
+    feat = torch.cat((item, user[len(item):], kg[len(user):]))
+    feat = F.normalize(feat, p=2, dim=1)
+
+    a = torch.index_select(feat, dim=0, index=torch.tensor(first_elements).to(device))
+    b = torch.index_select(feat, dim=0, index=torch.tensor(second_elements).to(device))
+    c = (a * b).sum(dim=1).to(device)
+
     ground_truth = 2 * torch.tensor(labels).to(device) - 1
-    print(roc_auc_score(torch.tensor(labels).detach().to('cpu').numpy(), c.detach().to('cpu').numpy()))
+
+    print(roc_auc_score(torch.tensor(labels).detach().to('cpu').numpy(), ((c.detach().to('cpu') + 1) / 2).numpy()))
 
     loss = criterion(c, ground_truth.to(torch.float32))
     # print(loss)
